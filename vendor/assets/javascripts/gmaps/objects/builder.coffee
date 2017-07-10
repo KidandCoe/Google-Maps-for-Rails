@@ -1,7 +1,7 @@
-@Gmaps.Objects.Builders = (builderClass, objectClass, primitivesProvider)->
+@Gmaps.Objects.Builders = (builderClass, objectClass, primitivesProvider) ->
 
   return {
-    build: (args, provider_options, internal_options)->
+    build: (args, provider_options, internal_options) ->
       objectClass.PRIMITIVES = primitivesProvider
       builderClass.OBJECT     = objectClass
       builderClass.PRIMITIVES = primitivesProvider

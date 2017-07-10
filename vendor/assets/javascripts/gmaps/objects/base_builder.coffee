@@ -7,7 +7,7 @@ class @Gmaps.Objects.BaseBuilder
 
   after_init: ->
 
-  addListener: (action, fn)->
+  addListener: (action, fn) ->
     @primitives().addListener @getServiceObject(), action, fn
 
   getServiceObject: ->

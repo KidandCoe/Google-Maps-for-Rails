@@ -16,6 +16,7 @@
     polyline:     google.maps.Polyline
     polygon:      google.maps.Polygon
     kml:          google.maps.KmlLayer
+    spiderfier:   OverlappingMarkerSpiderfier
 
     addListener: (object, event_name, fn)->
       factory.listener object, event_name, fn

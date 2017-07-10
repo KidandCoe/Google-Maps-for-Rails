@@ -9,72 +9,79 @@ class @Gmaps.Objects.Handler
   #   models:   object, custom models   if you have some
   #   builders: object, custom builders if you have some
   #
-  constructor: (@type, options = {})->
+  constructor: (@type, options = {}) ->
     @setPrimitives options
     @setOptions options
     @_cacheAllBuilders()
     @resetBounds()
 
-  buildMap: (options, onMapLoad = ->)->
+  buildMap: (options, onMapLoad = ->) ->
     @map = @_builder('Map').build options, =>
       @_createClusterer()
+      @_createSpiderfier()
       onMapLoad()
 
   # return array of marker objects
-  addMarkers: (markers_data, provider_options)->
-    _.map markers_data, (marker_data)=>
+  addMarkers: (markers_data, provider_options) ->
+    _.map markers_data, (marker_data) =>
       @addMarker marker_data, provider_options
 
   # return marker object
-  addMarker: (marker_data, provider_options)->
+  addMarker: (marker_data, provider_options) ->
     marker = @_builder('Marker').build(marker_data, provider_options, @marker_options)
-    marker.setMap(@getMap())
+    @addToMap(marker)
     @clusterer.addMarker marker
     marker
 
+  addToMap: (marker) ->
+    if @_spiderify()
+      @spiderfier.addMarker(marker)
+    else
+      marker.setMap(@getMap())
+
   # return array of circle objects
-  addCircles: (circles_data, provider_options)->
-    _.map circles_data, (circle_data)=>
+  addCircles: (circles_data, provider_options) ->
+    _.map circles_data, (circle_data) =>
       @addCircle circle_data, provider_options
 
   # return circle object
-  addCircle: (circle_data, provider_options)->
+  addCircle: (circle_data, provider_options) ->
     @_addResource('circle', circle_data, provider_options)
 
   # return array of polyline objects
-  addPolylines: (polylines_data, provider_options)->
-    _.map polylines_data, (polyline_data)=>
+  addPolylines: (polylines_data, provider_options) ->
+    _.map polylines_data, (polyline_data) =>
       @addPolyline polyline_data, provider_options
 
   # return polyline object
-  addPolyline: (polyline_data, provider_options)->
+  addPolyline: (polyline_data, provider_options) ->
     @_addResource('polyline', polyline_data, provider_options)
 
   # return array of polygon objects
-  addPolygons: (polygons_data, provider_options)->
-    _.map polygons_data, (polygon_data)=>
+  addPolygons: (polygons_data, provider_options) ->
+    _.map polygons_data, (polygon_data) =>
       @addPolygon polygon_data, provider_options
 
   # return polygon object
-  addPolygon: (polygon_data, provider_options)->
+  addPolygon: (polygon_data, provider_options) ->
     @_addResource('polygon', polygon_data, provider_options)
 
   # return array of kml objects
-  addKmls: (kmls_data, provider_options)->
-    _.map kmls_data, (kml_data)=>
+  addKmls: (kmls_data, provider_options) ->
+    _.map kmls_data, (kml_data) =>
       @addKml kml_data, provider_options
 
   # return kml object
-  addKml: (kml_data, provider_options)->
+  addKml: (kml_data, provider_options) ->
     @_addResource('kml', kml_data, provider_options)
 
   # removes markers from map
-  removeMarkers: (gem_markers)->
-    _.map gem_markers, (gem_marker)=>
+  removeMarkers: (gem_markers) ->
+    _.map gem_markers, (gem_marker) =>
       @removeMarker gem_marker
 
   # removes marker from map
-  removeMarker: (gem_marker)->
+  removeMarker: (gem_marker) ->
     gem_marker.clear()
     @clusterer.removeMarker(gem_marker)
 
@@ -84,7 +91,7 @@ class @Gmaps.Objects.Handler
   getMap: ->
     @map.getServiceObject()
 
-  setOptions: (options)->
+  setOptions: (options) ->
     @marker_options = _.extend @_default_marker_options(), options.markers
     @builders       = _.extend @_default_builders(),       options.builders
     @models         = _.extend @_default_models(),         options.models
@@ -92,7 +99,7 @@ class @Gmaps.Objects.Handler
   resetBounds: ->
     @bounds = @_builder('Bound').build()
 
-  setPrimitives: (options)->
+  setPrimitives: (options) ->
     @primitives = if options.primitives is undefined
                     @_rootModule().Primitives()
                   else
@@ -116,6 +123,12 @@ class @Gmaps.Objects.Handler
   _createClusterer: ->
     @clusterer = @_builder('Clusterer').build({ map: @getMap() }, @marker_options.clusterer )
 
+  _spiderify: ->
+    _.isObject @marker_options.spiderfier
+
+  _createSpiderfier: ->
+    @spiderfier = @_builder('Spiderfier').build({ map: @getMap() }, @marker_options.spiderfier )
+
   _default_marker_options: ->
     _.clone {
       singleInfowindow:  true
@@ -123,10 +136,14 @@ class @Gmaps.Objects.Handler
       clusterer:
         maxZoom:  5
         gridSize: 50
+      spiderfier:
+        markersWontMove: true
+        markersWontHide: true
+        basicFormatEvents: true
       disableAutoPanTo: false
     }
 
-  _builder: (name)->
+  _builder: (name) ->
     name = @_capitalize(name)
     @["__builder#{name}"] ?= Gmaps.Objects.Builders(@builders[name], @models[name], @primitives)
     @["__builder#{name}"]
@@ -139,7 +156,7 @@ class @Gmaps.Objects.Handler
       models.Clusterer = Gmaps.Objects.NullClusterer
       models
 
-  _capitalize: (string)->
+  _capitalize: (string) ->
     string.charAt(0).toUpperCase() + string.slice(1)
 
   _default_builders: ->
