@@ -26,7 +26,7 @@ class @Gmaps.Google.Builders.Marker extends Gmaps.Objects.BaseBuilder
   #   singleInfowindow: true/false
   #   maxRandomDistance: null / int in meters
   #   disableAutoPanTo: true/false
-  constructor: (@args, @provider_options = {}, @internal_options = {})->
+  constructor: (@args, @provider_options = {}, @internal_options = {}) ->
     @before_init()
     @create_marker()
     @create_infowindow_on_click()
@@ -40,7 +40,7 @@ class @Gmaps.Google.Builders.Marker extends Gmaps.Objects.BaseBuilder
 
   create_infowindow: ->
     return null unless _.isString @args.infowindow
-    new(@primitives().infowindow)({content: @args.infowindow })
+    new(@primitives().infowindow)({ content: @args.infowindow })
 
   marker_options: ->
     coords = @_randomized_coordinates()
@@ -52,7 +52,10 @@ class @Gmaps.Google.Builders.Marker extends Gmaps.Objects.BaseBuilder
     _.extend @provider_options, base_options
 
   create_infowindow_on_click: ->
-    @addListener 'click', @infowindow_binding
+    if @internal_options.spiderfier
+      @addListener 'spider_click', @infowindow_binding
+    else
+      @addListener 'click', @infowindow_binding
 
   infowindow_binding: =>
     @constructor.CURRENT_INFOWINDOW.close() if @_should_close_infowindow()
@@ -61,11 +64,11 @@ class @Gmaps.Google.Builders.Marker extends Gmaps.Objects.BaseBuilder
 
     return unless @infowindow?
 
-    @infowindow.open( @getServiceObject().getMap(), @getServiceObject())
+    @infowindow.open(@getServiceObject().getMap(), @getServiceObject())
     @marker.infowindow ?= @infowindow
     @constructor.CURRENT_INFOWINDOW = @infowindow
 
-  _get_picture: (picture_name)->
+  _get_picture: (picture_name) ->
     return null if !_.isObject(@args[picture_name]) || !_.isString(@args[picture_name].url)
     @_create_or_retrieve_image @_picture_args(picture_name)
 
@@ -74,7 +77,6 @@ class @Gmaps.Google.Builders.Marker extends Gmaps.Objects.BaseBuilder
       @constructor.CACHE_STORE[picture_args.url] = new(@primitives().markerImage)(picture_args.url, picture_args.size, picture_args.origin, picture_args.anchor , picture_args.scaledSize)
 
     @constructor.CACHE_STORE[picture_args.url]
-
 
   _picture_args: (picture_name) ->
     return_args =
